@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>POS System</title>
+  <style>
+    body { font-family: Arial; max-width: 900px; margin: 20px auto; }
+    input, button { padding: 10px; margin: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h2>Gazipur Mobile Hub POS</h2>
+
+  <input id="barcode" placeholder="Scan barcode" />
+  <button onclick="addProduct()">Add</button>
+
+  <br />
+
+  <input id="customer_name" placeholder="Customer Name" />
+  <input id="customer_phone" placeholder="Customer Phone" />
+  <input id="staff_name" placeholder="Staff Name" />
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Barcode</th>
+        <th>Price</th>
+        <th>Qty</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="cart"></tbody>
+  </table>
+
+  <h3>Total: <span id="grandTotal">0</span></h3>
+  <button onclick="submitOrder()">Save Order</button>
+
+  <script>
+    let items = [];
+
+    async function addProduct() {
+      const barcode = document.getElementById("barcode").value.trim();
+      if (!barcode) return;
+
+      const res = await fetch("/product/" + barcode);
+      if (!res.ok) {
+        alert("Product not found");
+        return;
+      }
+
+      const product = await res.json();
+      const existing = items.find(i => i.barcode === product.barcode);
+
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        items.push({
+          product_id: product.id,
+          barcode: product.barcode,
+          product_name: product.name,
+          unit_price: product.price,
+          qty: 1
+        });
+      }
+
+      document.getElementById("barcode").value = "";
+      renderCart();
+    }
+
+    function renderCart() {
+      const cart = document.getElementById("cart");
+      cart.innerHTML = "";
+      let total = 0;
+
+      items.forEach((item) => {
+        const lineTotal = Number(item.unit_price) * Number(item.qty);
+        total += lineTotal;
+
+        cart.innerHTML += `
+          <tr>
+            <td>${item.product_name}</td>
+            <td>${item.barcode}</td>
+            <td>${item.unit_price}</td>
+            <td>${item.qty}</td>
+            <td>${lineTotal}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById("grandTotal").innerText = total.toFixed(2);
+    }
+
+    async function submitOrder() {
+      const customer_name = document.getElementById("customer_name").value.trim();
+      const customer_phone = document.getElementById("customer_phone").value.trim();
+      const staff_name = document.getElementById("staff_name").value.trim();
+
+      const res = await fetch("/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_name, customer_phone, staff_name, items })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Order saved: " + data.order_code);
+        window.open("/print/" + data.order_code, "_blank");
+        items = [];
+        renderCart();
+      } else {
+        alert("Error saving order");
+      }
+    }
+  </script>
+</body>
+</html>
