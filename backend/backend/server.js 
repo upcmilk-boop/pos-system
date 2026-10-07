@@ -1,0 +1,124 @@
+const express = require("express");
+const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config();
+
+const path = require("path");
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// Barcode lookup
+app.get("/product/:barcode", async (req, res) => {
+  const { barcode } = req.params;
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("barcode", barcode)
+    .single();
+
+  if (error) return res.status(404).json({ error: "Product not found" });
+  res.json(data);
+});
+
+// Save order
+app.post("/order", async (req, res) => {
+  try {
+    const { customer_name, customer_phone, staff_name, items } = req.body;
+
+    let customerId = null;
+
+    if (customer_name || customer_phone) {
+      const { data: customer, error: customerError } = await supabase
+        .from("customers")
+        .insert([{ name: customer_name || null, phone: customer_phone || null }])
+        .select()
+        .single();
+
+      if (customerError) throw customerError;
+      customerId = customer.id;
+    }
+
+    const totalAmount = items.reduce(
+      (sum, item) => sum + Number(item.unit_price) * Number(item.qty),
+      0
+    );
+
+    const orderCode = "INV-" + Date.now();
+
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert([
+        {
+          order_code: orderCode,
+          customer_id: customerId,
+          staff_name: staff_name || null,
+          status: "pending",
+          total_amount: totalAmount
+        }
+      ])
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
+    const orderItems = items.map((item) => ({
+      order_id: order.id,
+      product_id: item.product_id || null,
+      barcode: item.barcode,
+      product_name: item.product_name,
+      unit_price: item.unit_price,
+      qty: item.qty,
+      line_total: Number(item.unit_price) * Number(item.qty)
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsError) throw itemsError;
+
+    res.json({
+      success: true,
+      order_id: order.id,
+      order_code: orderCode,
+      total_amount: totalAmount
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Print page route
+app.get("/print/:orderCode", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/print.html"));
+});
+
+// Pending orders list (optional)
+app.get("/orders/pending", async (req, res) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server started on ${PORT}`));
