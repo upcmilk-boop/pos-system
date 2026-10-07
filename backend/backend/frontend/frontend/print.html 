@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice Print</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: 20px auto; }
+    .box { border: 1px solid #000; padding: 15px; }
+    h2 { margin-top: 0; }
+    button { padding: 10px 16px; margin-top: 15px; }
+    .row { display: flex; justify-content: space-between; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Gazipur Mobile Hub</h2>
+    <p><b>Invoice:</b> <span id="orderCode"></span></p>
+
+    <div class="row">
+      <div><b>Date:</b> <span id="date"></span></div>
+      <div><b>Status:</b> <span id="status"></span></div>
+    </div>
+
+    <h3>Items</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Barcode</th>
+          <th>Qty</th>
+          <th>Unit</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="items"></tbody>
+    </table>
+
+    <h3 style="text-align:right;">Grand Total: <span id="grandTotal">0</span></h3>
+
+    <button onclick="window.print()">Print</button>
+  </div>
+
+  <script>
+    const orderCode = location.pathname.split("/").pop();
+    document.getElementById("orderCode").innerText = orderCode;
+    document.getElementById("date").innerText = new Date().toLocaleString();
+    document.getElementById("status").innerText = "saved";
+
+    // NOTE: এই version এ items ডিটেইলস fetch করা নেই (সহজতার জন্য)
+    // Printing কাজ করবে basic invoice হিসেবে।
+    // চাইলে আমি পরে order details API যোগ করে ফুল invoice বানিয়ে দেব।
+  </script>
+</body>
+</html>
