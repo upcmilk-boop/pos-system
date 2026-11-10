@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice | Gazipur Mobile Hub</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:28px;background:#f3f6fb;color:#142033;font-family:Arial,sans-serif}.invoice{max-width:720px;margin:auto;background:#fff;border:1px solid #e1e6ee;border-radius:12px;padding:32px;box-shadow:0 5px 20px #172a4610}.head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #17243a;padding-bottom:18px}.head h1{margin:0 0 6px;font-size:22px}.muted{color:#68768d;font-size:13px}.meta{margin:20px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #e4e9f1;font-size:13px}th{color:#68768d;text-transform:uppercase;font-size:11px}.right{text-align:right}.total{display:flex;justify-content:space-between;font-size:19px;font-weight:bold;margin:20px 0}.buttons{display:flex;gap:10px}button{padding:10px 16px;border:0;border-radius:7px;background:#315ee8;color:#fff;font-weight:bold;cursor:pointer}.secondary{background:#eef2f8;color:#34435b}.error{color:#bd3442}@media print{body{padding:0;background:#fff}.invoice{box-shadow:none;border:0;padding:0}.buttons{display:none}}@media(max-width:500px){body{padding:10px}.invoice{padding:18px}.head{display:block}.meta{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="invoice">
+    <div class="head"><div><h1>Gazipur Mobile Hub</h1><div class="muted">Sales invoice</div></div><div class="right"><strong id="orderCode">Invoice</strong><div class="muted" id="date"></div></div></div>
+    <div class="meta"><div><strong>Status:</strong> <span id="status">Loading…</span></div><div><strong>Staff:</strong> <span id="staff">—</span></div></div>
+    <table><thead><tr><th>Product</th><th>Barcode</th><th>Qty</th><th class="right">Unit price</th><th class="right">Amount</th></tr></thead><tbody id="items"><tr><td colspan="5">Loading invoice…</td></tr></tbody></table>
+    <div class="total"><span>Total</span><span id="grandTotal">৳0.00</span></div>
+    <p class="muted" id="error" role="alert"></p>
+    <div class="buttons"><button onclick="window.print()">Print invoice</button><button class="secondary" onclick="window.close()">Close</button></div>
+  </main>
+<script>
+  const money = new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" });
+  const code = decodeURIComponent(location.pathname.split("/").pop() || "");
+  document.getElementById("orderCode").textContent = code;
+  async function loadInvoice() {
+    try {
+      const response = await fetch(`/api/orders/${encodeURIComponent(code)}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not load invoice.");
+      document.getElementById("date").textContent = result.order.created_at ? new Date(result.order.created_at).toLocaleString() : "";
+      document.getElementById("status").textContent = result.order.status || "saved";
+      document.getElementById("staff").textContent = result.order.staff_name || "—";
+      const tbody = document.getElementById("items");
+      tbody.replaceChildren();
+      for (const item of result.items) {
+        const row = tbody.insertRow();
+        row.insertCell().textContent = item.product_name || "Product";
+        row.insertCell().textContent = item.barcode || "—";
+        row.insertCell().textContent = String(item.qty);
+        const unit = row.insertCell(); unit.className = "right"; unit.textContent = money.format(Number(item.unit_price) || 0);
+        const total = row.insertCell(); total.className = "right"; total.textContent = money.format(Number(item.line_total) || 0);
+      }
+      document.getElementById("grandTotal").textContent = money.format(Number(result.order.total_amount) || 0);
+    } catch (error) {
+      document.getElementById("items").replaceChildren();
+      document.getElementById("error").textContent = error.message || "Could not load invoice.";
+      document.getElementById("status").textContent = "Unavailable";
+    }
+  }
+  loadInvoice();
+</script>
+</body>
+</html>

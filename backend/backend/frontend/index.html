@@ -1,120 +1,169 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>POS System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101a2d" />
+  <title>Gazipur Mobile Hub | POS</title>
   <style>
-    body { font-family: Arial; max-width: 900px; margin: 20px auto; }
-    input, button { padding: 10px; margin: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#142033;background:#f3f6fb;font-synthesis:none;text-rendering:optimizeLegibility;--navy:#101a2d;--blue:#315ee8;--muted:#718096;--line:#e4e9f1;--green:#14875c;--red:#cf3f4f}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh}.topbar{background:var(--navy);color:#fff;padding:20px max(22px,calc((100vw - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{font-weight:750;font-size:19px;letter-spacing:-.3px}.brand small{display:block;color:#aab8cf;font-size:12px;font-weight:450;margin-top:3px}.health{font-size:12px;color:#c5d1e4}.layout{max-width:1200px;margin:26px auto;padding:0 20px;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,.8fr);gap:20px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px #172a4610;padding:22px}.panel h1,.panel h2{margin:0 0 6px;letter-spacing:-.5px}.panel h1{font-size:21px}.panel h2{font-size:17px}.sub{color:var(--muted);font-size:13px;margin:0 0 20px}.scan{display:flex;gap:10px;margin-bottom:20px}.scan input{flex:1;font-size:16px}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 20px}.field-grid label{font-size:12px;color:#65728a}.field-grid input{margin-top:5px;width:100%}input{min-width:0;border:1px solid #dce3ed;border-radius:8px;padding:11px 12px;font:inherit;outline:none}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #315ee81b}button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:10px 15px;font-weight:650}.primary{background:var(--blue);color:white}.primary:hover{background:#244bc5}.quiet{background:#eef2f8;color:#34435b}.danger{color:var(--red);background:#fff0f1;padding:7px 10px}.scan .primary{min-width:94px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px}table{border-collapse:collapse;width:100%;white-space:nowrap}th,td{text-align:left;padding:12px 13px;border-bottom:1px solid var(--line);font-size:13px}th{background:#f8fafd;color:#68768d;font-size:11px;text-transform:uppercase;letter-spacing:.5px}tbody tr:last-child td{border-bottom:0}.qty{display:flex;align-items:center;gap:8px}.qty button{padding:4px 9px;background:#eef2f8}.empty{text-align:center;color:#8390a5;padding:32px 10px}.summary{display:flex;justify-content:space-between;color:#637189;font-size:14px;padding:11px 0;border-bottom:1px solid var(--line)}.summary strong{color:#17243a}.total{display:flex;justify-content:space-between;font-size:19px;font-weight:750;padding:17px 0 19px}.total strong{color:var(--blue)}.actions{display:grid;gap:9px}.actions button{width:100%;padding:12px}.note{font-size:12px;color:var(--muted);line-height:1.55;margin:14px 0 0}.toast{min-height:20px;margin-top:10px;font-size:13px;color:var(--red)}button:disabled{opacity:.55;cursor:wait}.product-name{font-weight:650}.currency{font-variant-numeric:tabular-nums}@media(max-width:800px){.layout{grid-template-columns:1fr;margin:18px auto}.topbar{padding:16px 20px}}@media(max-width:480px){.field-grid{grid-template-columns:1fr}.panel{padding:16px}.layout{padding:0 12px}.health{max-width:130px;text-align:right}}
   </style>
 </head>
 <body>
-  <h2>Gazipur Mobile Hub POS</h2>
+  <header class="topbar"><div class="brand">Gazipur Mobile Hub<small>Point of Sale</small></div><div class="health" id="health" role="status">Checking system…</div></header>
+  <main class="layout">
+    <section class="panel" aria-labelledby="saleTitle">
+      <h1 id="saleTitle">New sale</h1><p class="sub">Scan a barcode or type it in to add a catalog product.</p>
+      <form class="scan" id="scanForm"><input id="barcode" aria-label="Barcode" placeholder="Scan or enter barcode" autocomplete="off" required /><button class="primary" id="addButton" type="submit">Add item</button></form>
+      <div class="field-grid">
+        <label>Customer name<input id="customerName" maxlength="120" autocomplete="name" placeholder="Optional" /></label>
+        <label>Customer phone<input id="customerPhone" maxlength="40" autocomplete="tel" inputmode="tel" placeholder="Optional" /></label>
+        <label>Staff name<input id="staffName" maxlength="120" autocomplete="name" placeholder="Optional" /></label>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Product</th><th>Barcode</th><th>Unit price</th><th>Qty</th><th>Amount</th><th></th></tr></thead><tbody id="cart"><tr><td class="empty" colspan="6">Your cart is empty. Scan a product to get started.</td></tr></tbody></table></div>
+      <div class="toast" id="message" role="status" aria-live="polite"></div>
+    </section>
+    <aside class="panel" aria-label="Sale summary">
+      <h2>Sale summary</h2><p class="sub">Review the total before saving.</p>
+      <div class="summary"><span>Items</span><strong id="itemCount">0</strong></div>
+      <div class="summary"><span>Subtotal</span><strong class="currency" id="subtotal">৳0.00</strong></div>
+      <div class="total"><span>Total due</span><strong class="currency" id="grandTotal">৳0.00</strong></div>
+      <div class="actions"><button class="primary" id="saveButton" type="button" disabled>Save sale &amp; print invoice</button><button class="quiet" id="clearButton" type="button">Clear cart</button></div>
+      <p class="note">Product prices are checked against the database when you save. Saving a sale requires the server and Supabase database to be configured.</p>
+    </aside>
+  </main>
+<script>
+  const items = [];
+  const money = new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" });
+  const $ = (id) => document.getElementById(id);
+  const escapeMessage = (message) => { $("message").textContent = message || ""; };
 
-  <input id="barcode" placeholder="Scan barcode" />
-  <button onclick="addProduct()">Add</button>
+  async function checkHealth() {
+    try {
+      const response = await fetch("/api/health");
+      const data = await response.json();
+      $("health").textContent = data.databaseConfigured ? "● Database ready" : "● Database not configured";
+      $("health").style.color = data.databaseConfigured ? "#9ce4c5" : "#ffd18e";
+    } catch {
+      $("health").textContent = "● Server unavailable";
+      $("health").style.color = "#ffaaaa";
+    }
+  }
 
-  <br />
+  function renderCart() {
+    const cart = $("cart");
+    cart.replaceChildren();
+    let total = 0;
+    let count = 0;
+    if (!items.length) {
+      const row = cart.insertRow();
+      const cell = row.insertCell();
+      cell.colSpan = 6;
+      cell.className = "empty";
+      cell.textContent = "Your cart is empty. Scan a product to get started.";
+    }
+    items.forEach((item, index) => {
+      const lineTotal = item.unit_price * item.qty;
+      total += lineTotal;
+      count += item.qty;
+      const row = cart.insertRow();
+      const productCell = row.insertCell();
+      productCell.className = "product-name";
+      productCell.textContent = item.product_name;
+      row.insertCell().textContent = item.barcode;
+      row.insertCell().textContent = money.format(item.unit_price);
+      const qtyCell = row.insertCell();
+      const controls = document.createElement("div");
+      controls.className = "qty";
+      const minus = document.createElement("button");
+      minus.type = "button"; minus.textContent = "−"; minus.setAttribute("aria-label", `Decrease ${item.product_name} quantity`);
+      minus.addEventListener("click", () => changeQty(index, -1));
+      const quantity = document.createElement("span"); quantity.textContent = item.qty;
+      const plus = document.createElement("button");
+      plus.type = "button"; plus.textContent = "+"; plus.setAttribute("aria-label", `Increase ${item.product_name} quantity`);
+      plus.addEventListener("click", () => changeQty(index, 1));
+      controls.append(minus, quantity, plus); qtyCell.appendChild(controls);
+      row.insertCell().textContent = money.format(lineTotal);
+      const removeCell = row.insertCell();
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.className = "danger"; remove.textContent = "Remove";
+      remove.addEventListener("click", () => { items.splice(index, 1); renderCart(); });
+      removeCell.appendChild(remove);
+    });
+    $("itemCount").textContent = String(count);
+    $("subtotal").textContent = money.format(total);
+    $("grandTotal").textContent = money.format(total);
+    $("saveButton").disabled = items.length === 0;
+  }
 
-  <input id="customer_name" placeholder="Customer Name" />
-  <input id="customer_phone" placeholder="Customer Phone" />
-  <input id="staff_name" placeholder="Staff Name" />
+  function changeQty(index, delta) {
+    items[index].qty += delta;
+    if (items[index].qty < 1) items.splice(index, 1);
+    renderCart();
+  }
 
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Barcode</th>
-        <th>Price</th>
-        <th>Qty</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody id="cart"></tbody>
-  </table>
-
-  <h3>Total: <span id="grandTotal">0</span></h3>
-  <button onclick="submitOrder()">Save Order</button>
-
-  <script>
-    let items = [];
-
-    async function addProduct() {
-      const barcode = document.getElementById("barcode").value.trim();
-      if (!barcode) return;
-
-      const res = await fetch("/product/" + barcode);
-      if (!res.ok) {
-        alert("Product not found");
-        return;
-      }
-
-      const product = await res.json();
-      const existing = items.find(i => i.barcode === product.barcode);
-
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        items.push({
-          product_id: product.id,
-          barcode: product.barcode,
-          product_name: product.name,
-          unit_price: product.price,
-          qty: 1
-        });
-      }
-
-      document.getElementById("barcode").value = "";
+  $("scanForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const barcode = $("barcode").value.trim();
+    if (!barcode) return;
+    const button = $("addButton");
+    button.disabled = true;
+    escapeMessage("");
+    try {
+      const response = await fetch(`/api/products/${encodeURIComponent(barcode)}`);
+      const product = await response.json();
+      if (!response.ok) throw new Error(product.error || "Could not find that product.");
+      const existing = items.find((item) => item.barcode === product.barcode);
+      if (existing) existing.qty += 1;
+      else items.push({ barcode: product.barcode, product_name: product.name, unit_price: Number(product.price), qty: 1 });
+      $("barcode").value = "";
       renderCart();
+      $("barcode").focus();
+    } catch (error) {
+      escapeMessage(error.message || "Could not add product. Check the server connection.");
+    } finally {
+      button.disabled = false;
     }
+  });
 
-    function renderCart() {
-      const cart = document.getElementById("cart");
-      cart.innerHTML = "";
-      let total = 0;
-
-      items.forEach((item) => {
-        const lineTotal = Number(item.unit_price) * Number(item.qty);
-        total += lineTotal;
-
-        cart.innerHTML += `
-          <tr>
-            <td>${item.product_name}</td>
-            <td>${item.barcode}</td>
-            <td>${item.unit_price}</td>
-            <td>${item.qty}</td>
-            <td>${lineTotal}</td>
-          </tr>
-        `;
-      });
-
-      document.getElementById("grandTotal").innerText = total.toFixed(2);
-    }
-
-    async function submitOrder() {
-      const customer_name = document.getElementById("customer_name").value.trim();
-      const customer_phone = document.getElementById("customer_phone").value.trim();
-      const staff_name = document.getElementById("staff_name").value.trim();
-
-      const res = await fetch("/order", {
+  $("saveButton").addEventListener("click", async () => {
+    if (!items.length) return;
+    const printWindow = window.open("about:blank", "_blank");
+    if (printWindow) printWindow.document.write("<p style='font-family: sans-serif'>Saving sale…</p>");
+    const button = $("saveButton");
+    button.disabled = true;
+    escapeMessage("");
+    try {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_name, customer_phone, staff_name, items })
+        body: JSON.stringify({
+          customer_name: $("customerName").value,
+          customer_phone: $("customerPhone").value,
+          staff_name: $("staffName").value,
+          items: items.map(({ barcode, qty }) => ({ barcode, qty }))
+        })
       });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Order saved: " + data.order_code);
-        window.open("/print/" + data.order_code, "_blank");
-        items = [];
-        renderCart();
-      } else {
-        alert("Error saving order");
-      }
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "Could not save this sale.");
+      items.splice(0, items.length);
+      $("customerName").value = ""; $("customerPhone").value = "";
+      renderCart();
+      if (printWindow) printWindow.location = `/print/${encodeURIComponent(result.order_code)}`;
+      else window.location.href = `/print/${encodeURIComponent(result.order_code)}`;
+    } catch (error) {
+      if (printWindow) printWindow.close();
+      escapeMessage(error.message || "Could not save this sale. Check the server and database.");
+    } finally {
+      button.disabled = items.length === 0;
     }
-  </script>
+  });
+
+  $("clearButton").addEventListener("click", () => { items.splice(0, items.length); renderCart(); escapeMessage(""); $("barcode").focus(); });
+  checkHealth();
+  renderCart();
+  $("barcode").focus();
+</script>
 </body>
 </html>
