@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a2d">
+  <title>Gazipur Mobile Hub POS</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f3f6fb;color:#142033;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.card{width:min(100%,620px);padding:32px;background:#fff;border:1px solid #e3e9f2;border-radius:16px;box-shadow:0 12px 40px #172a4612}h1{margin:0 0 8px;font-size:26px}.lead{color:#66758c;line-height:1.6}.status{margin:24px 0;padding:16px;border-radius:10px;background:#fff7e8;color:#795311;line-height:1.6}.links{display:flex;flex-wrap:wrap;gap:12px}a{display:inline-block;padding:11px 16px;border-radius:8px;background:#315ee8;color:#fff;text-decoration:none;font-weight:650}a.secondary{background:#eef2f8;color:#34435b}.small{font-size:13px;color:#718096;line-height:1.6;margin-top:22px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Gazipur Mobile Hub POS</h1>
+    <p class="lead">POS system-এর ওয়েবসাইটের entry page তৈরি করা হয়েছে।</p>
+    <div class="status"><strong>গুরুত্বপূর্ণ:</strong> শুধু GitHub Pages-এ frontend দেখানো যায়; বিক্রি save, barcode lookup ও invoice-এর জন্য Node.js backend এবং Supabase চালু থাকা দরকার। Backend deploy না থাকলে POS-এর API কাজ করবে না।</div>
+    <div class="links">
+      <a href="./backend/backend/frontend/index.html">POS frontend preview</a>
+      <a class="secondary" href="https://github.com/upcmilk-boop/pos-system">GitHub repository</a>
+    </div>
+    <p class="small">পূর্ণ POS চালু করতে backend-টি Node.js hosting-এ deploy করে সেখানে SUPABASE_URL ও SUPABASE_ANON_KEY environment variables সেট করতে হবে। এরপর সেই backend URL-এই POS ব্যবহার করতে হবে।</p>
+  </main>
+</body>
+</html>
